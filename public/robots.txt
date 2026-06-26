@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ratemypcai.vercel.app/sitemap.xml
+Sitemap: https://ratemypc.ai/sitemap.xml

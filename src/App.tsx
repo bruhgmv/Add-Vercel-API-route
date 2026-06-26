@@ -1,40 +1,70 @@
 import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation, useSearchParams } from "react-router-dom";
 import { ViewState, HardwareInput, AnalysisResult, UsageLimit } from "./types";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Hero from "./components/Hero";
-import Features from "./components/Features";
-import HowItWorks from "./components/HowItWorks";
-import FAQ from "./components/FAQ";
-import Analyzer from "./components/Analyzer";
-import ResultsView from "./components/ResultsView";
 import SEOConfig from "./components/SEOConfig";
-import { AboutView, PrivacyView, TermsView, CookiesView, ContactView } from "./components/LegalPages";
 import { motion, AnimatePresence } from "motion/react";
 
-// Google Analytics placeholder tracker
+// Route pages
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+import CookiePolicy from "./pages/CookiePolicy";
+
+// Google Analytics page tracking helper
 function trackPageView(viewName: string) {
-  console.log(`[Google Analytics Placeholder] Tracking view change: /${viewName}`);
+  console.log(`[Google Analytics] Tracking page view: /${viewName}`);
   if (typeof window !== "undefined" && (window as any).gtag) {
-    (window as any).gtag("config", "G-PLACEHOLDER", {
+    (window as any).gtag("config", "G-B4EY6D9XBG", {
       page_path: `/${viewName}`
     });
   }
 }
 
-export default function App() {
-  const [currentView, setView] = useState<ViewState>("home");
+// Scroll to top helper to simulate instant multi-page scroll resets
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as any });
+  }, [pathname, search]);
+
+  return null;
+}
+
+// Helper to translate router paths to standard SEO view-state types
+function getViewState(pathname: string, isScan: boolean): ViewState {
+  if (pathname === "/about") return "about";
+  if (pathname === "/contact") return "contact";
+  if (pathname === "/privacy-policy") return "privacy";
+  if (pathname === "/terms") return "terms";
+  if (pathname === "/cookie-policy") return "cookies";
+  if (pathname === "/") {
+    return isScan ? "analyzer" : "home";
+  }
+  return "home";
+}
+
+function AppContent() {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const isScan = searchParams.get("scan") === "true";
+
   const [activeSpecs, setActiveSpecs] = useState<HardwareInput | null>(null);
   const [activeResult, setActiveResult] = useState<AnalysisResult | null>(null);
   const [remainingAnalyses, setRemainingAnalyses] = useState(3);
 
-  // Initialize and check usage limits on mount
+  const viewState = getViewState(location.pathname, isScan);
+
+  // Initialize and check usage limits on mount and route changes
   useEffect(() => {
     const limits = localStorage.getItem("ratemypc_usage_limits");
     const now = new Date();
 
     if (!limits) {
-      // First time initialization
       const initialLimit: UsageLimit = {
         count: 3,
         lastReset: now.toISOString()
@@ -48,7 +78,6 @@ export default function App() {
         const hoursPassed = (now.getTime() - lastResetDate.getTime()) / (1000 * 60 * 60);
 
         if (hoursPassed >= 24) {
-          // Reset limit since 24 hours have elapsed
           const resetLimit: UsageLimit = {
             count: 3,
             lastReset: now.toISOString()
@@ -63,120 +92,73 @@ export default function App() {
         setRemainingAnalyses(3);
       }
     }
-  }, [currentView]);
+  }, [location.pathname, isScan]);
 
-  // Track page views in analytics whenever currentView shifts
+  // Track page views in analytics whenever viewState changes
   useEffect(() => {
-    trackPageView(currentView);
-  }, [currentView]);
-
-  const handleAnalysisSuccess = (specs: HardwareInput, results: AnalysisResult) => {
-    setActiveSpecs(specs);
-    setActiveResult(results);
-    // Smooth transition into the results view state
-    setView("analyzer");
-  };
-
-  const handleBackToScan = () => {
-    setActiveResult(null);
-    setActiveSpecs(null);
-  };
-
-  // Safe navigation wrapper
-  const navigateTo = (view: ViewState) => {
-    setView(view);
-    // If navigating away from the analyzer, reset current results so they can run new ones later
-    if (view !== "analyzer") {
-      handleBackToScan();
-    }
-  };
-
-  // Render the matching component view
-  const renderViewContent = () => {
-    switch (currentView) {
-      case "analyzer":
-        if (activeSpecs && activeResult) {
-          return (
-            <ResultsView
-              specs={activeSpecs}
-              results={activeResult}
-              onBackClick={handleBackToScan}
-            />
-          );
-        }
-        return (
-          <Analyzer
-            onAnalysisSuccess={handleAnalysisSuccess}
-            remainingAnalyses={remainingAnalyses}
-            setRemainingAnalyses={setRemainingAnalyses}
-          />
-        );
-      case "about":
-        return <AboutView onCtaClick={() => navigateTo("analyzer")} />;
-      case "privacy":
-        return <PrivacyView />;
-      case "terms":
-        return <TermsView />;
-      case "cookies":
-        return <CookiesView />;
-      case "contact":
-        return <ContactView />;
-      default:
-        // Home landing page view
-        return (
-          <div key="home" className="space-y-4">
-            <Hero
-              onStartClick={() => navigateTo("analyzer")}
-              onLearnMoreClick={() => {
-                const featuresEl = document.getElementById("features");
-                if (featuresEl) {
-                  featuresEl.scrollIntoView({ behavior: "smooth" });
-                }
-              }}
-            />
-            <Features />
-            <HowItWorks />
-            <FAQ />
-          </div>
-        );
-    }
-  };
+    trackPageView(viewState);
+  }, [viewState]);
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#030303] text-white font-sans selection:bg-cyan-500 selection:text-black">
       {/* Dynamic SEO Injector */}
       <SEOConfig
-        view={currentView}
+        view={viewState}
         score={activeResult?.score}
         cpu={activeSpecs?.cpu}
         gpu={activeSpecs?.gpu}
       />
 
+      <ScrollToTop />
+
       {/* Global Navbar */}
-      <Navbar
-        currentView={currentView}
-        setView={navigateTo}
-        remainingAnalyses={remainingAnalyses}
-      />
+      <Navbar remainingAnalyses={remainingAnalyses} />
 
       {/* Main Content Area with Animated Layout Transitions */}
-      <main className="flex-grow">
+      <main className="flex-grow flex flex-col justify-start">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentView + (activeResult ? "-results" : "-form")}
+            key={location.pathname + (isScan ? "-scan" : "-main")}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full"
+            className="w-full flex-grow flex flex-col justify-start"
           >
-            {renderViewContent()}
+            <Routes location={location}>
+              <Route
+                path="/"
+                element={
+                  <Home
+                    remainingAnalyses={remainingAnalyses}
+                    setRemainingAnalyses={setRemainingAnalyses}
+                    activeSpecs={activeSpecs}
+                    setActiveSpecs={setActiveSpecs}
+                    activeResult={activeResult}
+                    setActiveResult={setActiveResult}
+                  />
+                }
+              />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/cookie-policy" element={<CookiePolicy />} />
+            </Routes>
           </motion.div>
         </AnimatePresence>
       </main>
 
       {/* Footer containing compliant links */}
-      <Footer setView={navigateTo} />
+      <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
