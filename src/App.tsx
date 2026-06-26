@@ -13,6 +13,7 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import CookiePolicy from "./pages/CookiePolicy";
+import Admin from "./pages/Admin";
 
 // Google Analytics page tracking helper
 function trackPageView(viewName: string) {
@@ -61,6 +62,12 @@ function AppContent() {
 
   // Initialize and check usage limits on mount and route changes
   useEffect(() => {
+    const isAdmin = localStorage.getItem("admin") === "true";
+    if (isAdmin) {
+      setRemainingAnalyses(3);
+      return;
+    }
+
     const limits = localStorage.getItem("ratemypc_usage_limits");
     const now = new Date();
 
@@ -144,6 +151,7 @@ function AppContent() {
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />
+              <Route path="/admin" element={<Admin />} />
             </Routes>
           </motion.div>
         </AnimatePresence>

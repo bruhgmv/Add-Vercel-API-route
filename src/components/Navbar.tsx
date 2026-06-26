@@ -11,6 +11,7 @@ export default function Navbar({ remainingAnalyses }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const isAdmin = localStorage.getItem("admin") === "true";
 
   const currentPath = location.pathname;
   const isScanMode = searchParams.get("scan") === "true";
@@ -91,14 +92,14 @@ export default function Navbar({ remainingAnalyses }: NavbarProps) {
           {/* Desktop Right Side CTA & Usage limit display */}
           <div className="hidden md:flex items-center space-x-4">
             <motion.div 
-              className="flex items-center space-x-2 rounded-full border border-zinc-800/80 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-zinc-400 shadow-inner"
+              className="flex items-center space-x-2 rounded-full border border-cyan-500/30 bg-cyan-950/20 px-3.5 py-1.5 text-xs text-cyan-400 shadow-inner"
               whileHover={{ scale: 1.03 }}
             >
               <span className="relative flex h-2 w-2">
-                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${remainingAnalyses > 0 ? "bg-cyan-400 animate-ping" : "bg-rose-400"}`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${remainingAnalyses > 0 ? "bg-cyan-500" : "bg-rose-500"}`}></span>
+                <span className="absolute inline-flex h-full w-full rounded-full opacity-75 bg-cyan-400 animate-ping"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
               </span>
-              <span className="font-mono">{remainingAnalyses} / 3 Scans Left</span>
+              <span className="font-mono">{isAdmin ? "Admin Active" : `${remainingAnalyses} / 3 Scans Left`}</span>
             </motion.div>
             
             <Link to="/?scan=true">
@@ -115,9 +116,9 @@ export default function Navbar({ remainingAnalyses }: NavbarProps) {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
-            <div className="flex items-center space-x-1 rounded-full border border-zinc-800 bg-zinc-900/40 px-2.5 py-1 text-[10px] text-zinc-400">
-              <span className={`h-1.5 w-1.5 rounded-full ${remainingAnalyses > 0 ? "bg-cyan-500" : "bg-rose-500"}`}></span>
-              <span className="font-mono">{remainingAnalyses} left</span>
+            <div className="flex items-center space-x-1 rounded-full border border-cyan-500/30 bg-cyan-950/30 px-2.5 py-1 text-[10px] text-cyan-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
+              <span className="font-mono">{isAdmin ? "Admin" : `${remainingAnalyses} left`}</span>
             </div>
             <button
               onClick={() => setIsOpen(!isOpen)}

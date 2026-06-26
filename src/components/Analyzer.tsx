@@ -19,6 +19,7 @@ const LOADING_STATUS_MESSAGES = [
 ];
 
 export default function Analyzer({ onAnalysisSuccess, remainingAnalyses, setRemainingAnalyses }: AnalyzerProps) {
+  const isAdmin = localStorage.getItem("admin") === "true";
   const [cpu, setCpu] = useState("");
   const [gpu, setGpu] = useState("");
   const [ram, setRam] = useState("16GB");
@@ -74,7 +75,7 @@ export default function Analyzer({ onAnalysisSuccess, remainingAnalyses, setRema
     }
 
     // Rate limit enforcement check
-    if (remainingAnalyses <= 0) {
+    if (!isAdmin && remainingAnalyses <= 0) {
       setError("Daily limit of 3 free analyses reached. Please wait for your daily quota to reset.");
       return;
     }
@@ -98,15 +99,17 @@ export default function Analyzer({ onAnalysisSuccess, remainingAnalyses, setRema
       const results: AnalysisResult = await response.json();
 
       // Decrement scan count in localStorage & state
-      const usageData = localStorage.getItem("ratemypc_usage_limits");
-      if (usageData) {
-        const parsed: UsageLimit = JSON.parse(usageData);
-        const updatedLimit = {
-          count: Math.max(0, parsed.count - 1),
-          lastReset: parsed.lastReset
-        };
-        localStorage.setItem("ratemypc_usage_limits", JSON.stringify(updatedLimit));
-        setRemainingAnalyses(updatedLimit.count);
+      if (!isAdmin) {
+        const usageData = localStorage.getItem("ratemypc_usage_limits");
+        if (usageData) {
+          const parsed: UsageLimit = JSON.parse(usageData);
+          const updatedLimit = {
+            count: Math.max(0, parsed.count - 1),
+            lastReset: parsed.lastReset
+          };
+          localStorage.setItem("ratemypc_usage_limits", JSON.stringify(updatedLimit));
+          setRemainingAnalyses(updatedLimit.count);
+        }
       }
 
       // Success callback
@@ -308,9 +311,9 @@ export default function Analyzer({ onAnalysisSuccess, remainingAnalyses, setRema
               <div className="pt-6 border-t border-zinc-800/60">
                 <motion.button
                   type="submit"
-                  disabled={remainingAnalyses <= 0}
-                  whileHover={{ scale: remainingAnalyses > 0 ? 1.02 : 1 }}
-                  whileTap={{ scale: remainingAnalyses > 0 ? 0.98 : 1 }}
+                  disabled={!isAdmin && remainingAnalyses <= 0}
+                  whileHover={{ scale: (isAdmin || remainingAnalyses > 0) ? 1.02 : 1 }}
+                  whileTap={{ scale: (isAdmin || remainingAnalyses > 0) ? 0.98 : 1 }}
                   className="group w-full flex items-center justify-center space-x-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 py-4 text-base font-bold text-white shadow-xl shadow-cyan-500/10 hover:shadow-cyan-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   <Play className="h-4 w-4 fill-white shrink-0" />
@@ -319,7 +322,7 @@ export default function Analyzer({ onAnalysisSuccess, remainingAnalyses, setRema
 
                 {/* Reset Details */}
                 <div className="mt-4 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
-                  <span>Free Scans Remaining: <strong className="text-cyan-400">{remainingAnalyses} / 3</strong></span>
+                  <span>Free Scans Remaining: <strong className="text-cyan-400">{isAdmin ? "Unlimited (Admin)" : `${remainingAnalyses} / 3`}</strong></span>
                   <span>Limits reset every 24 hours</span>
                 </div>
               </div>
