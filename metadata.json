@@ -1,0 +1,8 @@
+{
+  "name": "RateMyPC AI",
+  "description": "Analyze any CPU, GPU, and RAM setup instantly with AI to get gaming benchmarks, bottleneck analysis, and upgrade recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
