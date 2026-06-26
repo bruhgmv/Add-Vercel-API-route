@@ -11,6 +11,7 @@ import ResultsView from "./components/ResultsView";
 import SEOConfig from "./components/SEOConfig";
 import { AboutView, PrivacyView, TermsView, CookiesView, ContactView } from "./components/LegalPages";
 import { motion, AnimatePresence } from "motion/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Google Analytics placeholder tracker
 function trackPageView(viewName: string) {
@@ -177,6 +178,9 @@ export default function App() {
 
       {/* Footer containing compliant links */}
       <Footer setView={navigateTo} />
+
+      {/* Vercel Speed Insights */}
+      <SpeedInsights />
     </div>
   );
 }
